@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="assets/css/minesweeper.css">
+        <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
+        <script type='text/javascript' src="assets/js/minesweeper.js"></script>
+        <script>
+            angular.module('minesweeper', [])
+                .controller("minesweeperController", function($scope) {
+                    $scope.minefield = createMinefield(9, 9, 10);
+                    $scope.uncoverSpot = function(spot) {
+                        uncoverSpot($scope.minefield, spot);
+                    }
+                    
+                    $scope.rightClick = function(spot) {
+                        rightClick($scope.minefield, spot);
+                    }
+                    
+                    $scope.doubleClick = function(spot) {
+                        doubleClick($scope.minefield, spot);
+                    }
+                })
+                .directive('ngRightClick', function($parse) {
+                    return function(scope, element, attrs) {
+                        var fn = $parse(attrs.ngRightClick);
+                        element.bind('contextmenu', function(event) {
+                            scope.$apply(function() {
+                                event.preventDefault();
+                                fn(scope, {$event:event});
+                            });
+                        });
+                    };
+                });
+        </script>
+    </head>
+    <body ng-app="minesweeper" ng-controller="minesweeperController">
+        <h3 ng-if="minefield.gameWon">You won!</h3>
+        <h3 ng-if="minefield.gameWon === false">You Lost!</h3>
+        <table class="minefield">
+            <tr ng-repeat="row in minefield.rows">
+                <td ng-repeat="spot in row.spots" ng-click="uncoverSpot(spot)" ng-right-click="rightClick(spot)" ng-dblclick="doubleClick(spot)">
+                    <img ng-if="!spot.revealed" ng-src="assets/img/{{spot.hiddenContent}}.png">
+                    <img ng-if="spot.revealed" ng-src="assets/img/{{spot.content}}.png">
+                </td>
+            </tr>
+        </table>
+    </body>
+</html>
