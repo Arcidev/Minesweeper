@@ -1,22 +1,25 @@
 function createMinefield(rows, columns, mines) {
-    var minefield = {};
-    minefield.rows = [];
-    minefield.rowsCount = rows;
-    minefield.columnsCount = columns;
-    minefield.gameWon = null;
+    var minefield = {
+        rows: [],
+        rowsCount: rows,
+        columnsCount: columns,
+        gameWon: null
+    };
     
     for(var i = 0; i < rows; i++) {
-        var row = {};
-        row.spots = [];
+        var row = {
+            spots: []
+        };
         
         for(var j = 0; j < columns; j++) {
-            var spot = {};
-            spot.revealed = false;
-            spot.content = "empty";
-            spot.hiddenContent = "covered";
-            spot.minesCount = 0;
-            spot.row = i;
-            spot.column = j;
+            var spot = {
+                revealed: false,
+                content: "empty",
+                hiddenContent: "covered",
+                minesCount: 0,
+                row: i,
+                column: j
+            };
             row.spots.push(spot);
         }
         
@@ -111,6 +114,16 @@ function loopUncoveredNeighbors(minefield, spot, func) {
     })
 }
 
+function setGameOver(minefield) {
+    minefield.gameWon = false;
+    
+    minefield.rows.forEach(row => row.spots.forEach(spot => {
+        if (spot.hiddenContent === "flag-mine" && spot.content !== "mine") {
+            spot.hiddenContent = "flag-mine-wrong";
+        }
+    }));
+}
+
 function uncoverSpot(minefield, spot) {
     if (minefield.gameWon !== null || spot.revealed || spot.hiddenContent === "flag-mine") {
         return; // Game is over
@@ -119,16 +132,15 @@ function uncoverSpot(minefield, spot) {
     spot.revealed = true;
     
     if(spot.content === "mine") {
-        minefield.gameWon = false;
         spot.content = "mine-wrong";
+        setGameOver(minefield);
         return;
     }
     
-    if (spot.content == "empty") {
+    if (spot.content === "empty") {
         var queue = [spot];
         while (queue.length > 0) {
-            var s = queue.shift();
-            loopUncoveredNeighbors(minefield, s, function(processedSpot) {
+            loopUncoveredNeighbors(minefield, queue.shift(), function(processedSpot) {
                 processedSpot.revealed = true;
                 if (processedSpot.content === "empty") {
                     queue.push(processedSpot);
@@ -175,14 +187,10 @@ function doubleClick(minefield, spot) {
     }
     
     var toReveal = [];
-    var wrongFlags = [];
     var minesChecked = 0;
     loopUncoveredNeighbors(minefield, spot, function(processedSpot) {
         if (processedSpot.hiddenContent === "flag-mine") {
             minesChecked++;
-            if (processedSpot.content !== "mine") {
-                wrongFlags.push(processedSpot);
-            }
             return;
         }
         toReveal.push(processedSpot);
@@ -191,12 +199,6 @@ function doubleClick(minefield, spot) {
     if (minesChecked >= spot.minesCount) {
         toReveal.forEach(function(item) {
             uncoverSpot(minefield, item);
-        });
-    }
-    
-    if (minefield.gameWon === false) {
-        wrongFlags.forEach(function(item) {
-            item.hiddenContent = "flag-mine-wrong";
         });
     }
 }
